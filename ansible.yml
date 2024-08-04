@@ -1,0 +1,33 @@
+---
+- name: Golem Ghost Pepper Config
+  hosts: golfarm
+  remote_user: spectr
+  tasks:
+    - name: Install the package "sqlite"
+      become: true
+      ansible.builtin.apt:
+        name: sqlite3
+        update_cache: yes
+    - name: Copy node exporter file
+      ansible.builtin.copy:
+        src: ./exporter.sh
+        dest: /home/spectr/exporter.sh
+        mode: '0775'
+    - name: Copy Installer
+      ansible.builtin.copy:
+        src: ./install-provider.sh
+        dest: /home/spectr/install-provider.sh
+        mode: '0775'
+    - name: Run Installer
+      ansible.builtin.shell: /home/spectr/install-provider.sh
+    - name: Create node exporter folder
+      become: true
+      ansible.builtin.file:
+        path: /var/lib/node_exporter
+        state: directory
+        mode: '0777'
+    - name: crontab for nodeexporter
+      ansible.builtin.cron:
+        name: "run payment update for prometheus"
+        minute: "10,25,40,55"
+        job: "/home/spectr/exporter.sh > /dev/null"
